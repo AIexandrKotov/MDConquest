@@ -8,7 +8,25 @@ enum Screen {
     MainMenu,
 }
 
-#[macroquad::main("MDConquest")]
+fn window_conf() -> Conf {
+    let mut conf = Conf {
+        window_title: "MDConquest".to_owned(),
+        high_dpi: true,
+        ..Default::default()
+    };
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        conf.fullscreen = false;
+        conf.window_width = 540;
+        conf.window_height = 960;
+        conf.window_resizable = false;
+    }
+
+    conf
+}
+
+#[macroquad::main(window_conf)]
 async fn main() {
     let mut screen = Screen::MainMenu;
 
@@ -60,12 +78,17 @@ async fn main() {
     loop {
         match &screen {
             Screen::MainMenu => {
-                //btn("");
                 start_button.draw();
                 setting_button.draw();
                 draw_text(i.to_string().as_str(), 10., 10., 10., WHITE);
+
                 if setting_button.hovered(MouseButton::Left) {
                     i += 1;
+                }
+
+                #[cfg(not(target_arch = "wasm32"))]
+                if is_key_pressed(KeyCode::Escape) {
+                    std::process::exit(0)
                 }
             }
         }
