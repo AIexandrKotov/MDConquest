@@ -1,11 +1,14 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use macroquad::prelude::*;
 
-use crate::uihelpers::{Button, PositionedObject, Text};
+use std::vec;
+
+use macroquad::prelude::*;
+use crate::uihelpers::{Button, Card, CardDeck, Cell, Deck, Drawable, PositionedObject, Side, Text};
 mod uihelpers;
 
 enum Screen {
     MainMenu,
+    Game
 }
 
 fn window_conf() -> Conf {
@@ -26,8 +29,42 @@ fn window_conf() -> Conf {
     conf
 }
 
+fn new_deck() -> Deck {
+    Deck {
+        size: (3, 3),
+        cells: vec![Cell {
+            card: None,
+            owner: None
+        }; 9]
+    }
+}
+
+fn generate_cards(count: usize) -> Vec<Card> {
+    let mut result = Vec::<Card>::new();
+    for _ in 0..count {
+        result.push(Card {
+            attack: (rand::gen_range(1, 9), rand::gen_range(1, 9), rand::gen_range(1, 9), rand::gen_range(1, 9)),
+            color: Color {
+                r: rand::gen_range(0.5, 1.),
+                g: rand::gen_range(0.5, 1.),
+                b: rand::gen_range(0.5, 1.), 
+                a: 1.
+            }
+        });
+    }
+    result
+}
+
+fn generate_card_deck(count: usize) -> CardDeck {
+    CardDeck { 
+        cards: generate_cards(count)
+    }
+}
+
 #[macroquad::main(window_conf)]
 async fn main() {
+    rand::srand(miniquad::date::now() as u64);
+
     let mut screen = Screen::MainMenu;
 
     let font = load_ttf_font("arial.ttf").await.unwrap();
@@ -73,6 +110,11 @@ async fn main() {
         position: (100., 100.)
     };
 
+    let mut current_turn = Option::<Side>::None;
+    let mut deck = new_deck();
+    let mut my_card_deck = generate_card_deck(6);
+    let mut enemy_card_deck = generate_card_deck(6);
+
     let mut i = 0;
 
     loop {
@@ -89,6 +131,18 @@ async fn main() {
                 #[cfg(not(target_arch = "wasm32"))]
                 if is_key_pressed(KeyCode::Escape) {
                     std::process::exit(0)
+                }
+                if is_key_pressed(KeyCode::Right) {
+                    screen = Screen::Game;
+                }
+            }
+            Screen::Game => {
+                enemy_card_deck.draw(100., 100.);
+                deck.draw(100., 200.);
+                my_card_deck.draw(100., 500.);
+
+                if is_key_pressed(KeyCode::Left) {
+                    screen = Screen::MainMenu;
                 }
             }
         }
