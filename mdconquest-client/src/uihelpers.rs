@@ -53,6 +53,15 @@ impl Hoverable for Button<'_> {
     }
 }
 
+impl Hoverable for Rect {
+    fn hovered(&self, x: f32, y: f32, button: MouseButton) -> bool {
+        let mouse = mouse_position();
+        let hover: bool = self.contains(vec2(mouse.0, mouse.1));
+
+        hover && is_mouse_button_pressed(button)
+    }
+}
+
 #[derive(Clone)]
 pub struct PositionedObject<T> {
     pub obj: T,
@@ -115,6 +124,19 @@ impl Drawable for Deck {
                 self.cells[i * self.size.0 + j].draw(x + (i + 1) as f32 * 60., y + (j + 1) as f32 * 60.);
             }
         }
+    }
+}
+
+impl Cell {
+    pub fn hoverable(&self, id: usize, size_i: usize, x: f32, y: f32, button: MouseButton) -> bool {
+        let i = id / size_i;
+        let j = id % size_i;
+        
+        let mouse = mouse_position();
+        let rect = Rect::new(x + (i + 1) as f32 * 60., y + (j + 1) as f32 * 60., 50., 50.);
+        let hover = rect.contains(vec2(mouse.0, mouse.1));
+
+        hover && is_mouse_button_pressed(button)
     }
 }
 
@@ -238,13 +260,13 @@ impl Drawable for Card {
 
 impl Drawable for Cell {
     fn draw(&self, x: f32, y: f32) {
-        if let Some(card) = &self.card {
-            card.draw(x, y)
-        }
         draw_rectangle(x, y, 50., 50., match self.owner {
             None => GRAY,
             Some(Side::Me) => GREEN,
             Some(Side::Enemy) => RED
         });
+        if let Some(card) = &self.card {
+            card.draw(x, y)
+        }
     }
 }
